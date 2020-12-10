@@ -73,12 +73,12 @@ const userNameCreator = function (acc) {
 }
 userNameCreator(accounts);
 
-const displayMovements = function (acc) {
+const displayMovements = function (acc, sorting = false) {
   containerMovements.innerHTML = '';
-  acc.movements.forEach(function (mov, i) {
+  const movs = sorting ? acc.movements.slice().sort((a, b) => a - b) : acc.movements;
 
+  movs.forEach(function (mov, i) {
     const type = mov > 0 ? 'deposit' : 'withdrawal';
-
     const html = `
       <div class="movements__row">
         <div class="movements__type movements__type--${type}">${i + 1}</div>
@@ -115,7 +115,7 @@ btnLogin.addEventListener('click', function (e) {
   //prevent form from submitting
   e.preventDefault();
   currentAccount = accounts.find(acc => acc.userName === inputLoginUsername.value)
-  console.log(currentAccount);
+
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
     // display UI and message
     labelWelcome.textContent = `Welcome ${currentAccount.owner.split(" ")[0]}`
@@ -142,8 +142,38 @@ btnTransfer.addEventListener('click', function (e) {
 
   }
   else {
-    console.log("transfer invalid");
+
   }
+})
+
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+  if (inputCloseUsername.value === currentAccount.userName && Number(inputClosePin.value) === currentAccount.pin) {
+    const index = accounts.findIndex(acc => acc.userName === currentAccount.userName)
+    accounts.splice(index, 1);
+    labelWelcome.textContent = "Log in to get started"
+    containerApp.style.opacity = 0;
+    inputCloseUsername.value = inputClosePin.value = '';
+    inputCloseUsername.blur();
+    inputClosePin.blur();
+  }
+})
+
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputLoanAmount.value)
+  if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    currentAccount.movements.push(amount);
+    displayHandler(currentAccount);
+  }
+})
+
+const overallBalance = accounts.map(acc => acc.movements).flat().reduce((acc, mov) => acc + mov, 0);
+let sortedState = false;
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+  displayMovements(currentAccount, !sortedState)
+  sortedState = !sortedState
 })
 
 /////////////////////////////////////////////////
@@ -163,7 +193,7 @@ btnTransfer.addEventListener('click', function (e) {
 //   let result = mov > 0 ? `Movement ${i + 1}:\n You deposited ${mov}` : `Movement ${i + 1}:\n You withdrew ${Math.abs(mov)}`
 //   return result;
 // })
-// console.log(movementsDescriptions);
+// 
 
 // // Jonas Schmedtmann
 
